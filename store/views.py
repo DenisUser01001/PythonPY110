@@ -30,13 +30,28 @@ from logic.services import filtering_category
 def products_view(request):
     if request.method == "GET":
         # Обработка id из параметров запроса (уже было реализовано ранее)
-        if id_product := request.GET.get("id"):
-            if data := DATABASE.get(id_product):
-                return JsonResponse(data, json_dumps_params={'ensure_ascii': False, 'indent': 4})
-        elif id_product is None:
-            return JsonResponse(DATABASE, json_dumps_params={'ensure_ascii': False, 'indent': 4})
-        return HttpResponseNotFound("<h1>Данного продукта нет в базе данных.</h1>")
+        id_product = request.GET.get('id')
+        if id_product is None:
+            category_key = request.GET.get('category')  # Считали 'category'
+            ordering_key = request.GET.get('ordering')  # Считали в каком порядке будем сортировать
 
+            if ordering_key:  # Если в параметрах есть 'ordering'
+                if request.GET.get('reverse') and request.GET.get('reverse').lower() == 'true':  # Если в параметрах есть 'ordering' и 'reverse'=True
+                    data = filtering_category(DATABASE, category_key, ordering_key, True)  # TODO Использовать filtering_category и провести фильтрацию с параметрами category, ordering, reverse=True
+                else:  # Если не обнаружили в адресно строке ...&reverse=true , значит reverse=False
+                    data = filtering_category(DATABASE, category_key, ordering_key)  # TODO Использовать filtering_category и провести фильтрацию с параметрами category, ordering, reverse=False
+            else:
+                data = filtering_category(DATABASE, category_key)  # TODO Использовать filtering_category и провести фильтрацию с параметрами category
+
+            # В этот раз добавляем параметр safe=False, для корректного отображения списка в JSON
+            return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False,'indent': 4})
+
+        else:
+            data = DATABASE.get(id_product)
+            if data:
+                return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False, 'indent': 4})
+            else:
+                return HttpResponseNotFound("<h1>Данного продукта нет в базе данных!</h1>")
 
 
 
