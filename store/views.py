@@ -7,27 +7,37 @@ from logic.services import filtering_category
 
 # Create your views here.
 
+"""Моя первая версия отображения продуктов в JSON и отдельного JSON продукта по id:"""
+# def products_view(request: HttpRequest):
+#     if request.method == "GET":
+#         prod_id = request.GET.get('id')
+#
+#         products_id_in_database = []
+#         for temp1, temp2 in DATABASE.items():
+#             products_id_in_database.append(temp2['id'])
+#
+#         if prod_id in products_id_in_database:
+#             for key, nested_dict in DATABASE.items():
+#                 if nested_dict['id'] == int(prod_id):
+#
+#                     return JsonResponse(nested_dict, json_dumps_params={'ensure_ascii': False, 'indent': 4})
+#         elif prod_id is None:
+#             return JsonResponse(DATABASE, json_dumps_params={'ensure_ascii': False, 'indent': 4})
+#         else:
+#             return HttpResponseNotFound("<h1>Данного продукта нет в базе данных!</h1>")
 
-def products_view(request: HttpRequest):
+"""Версия, переписанная на основании практических пособий:"""
+def products_view(request):
     if request.method == "GET":
-
-        prod_id = request.GET.get('id')
-        products_id_in_database = []
-        for temp1, temp2 in DATABASE.items():
-            products_id_in_database.append(temp2['id'])
-
-        if prod_id in products_id_in_database:
-            for key, nested_dict in DATABASE.items():
-                if nested_dict['id'] == int(prod_id):
-
-                    # Добавление сортировки:
-
-                    #
-                    return JsonResponse(nested_dict, json_dumps_params={'ensure_ascii': False, 'indent': 4})
-        elif prod_id is None:
+        # Обработка id из параметров запроса (уже было реализовано ранее)
+        if id_product := request.GET.get("id"):
+            if data := DATABASE.get(id_product):
+                return JsonResponse(data, json_dumps_params={'ensure_ascii': False, 'indent': 4})
+        elif id_product is None:
             return JsonResponse(DATABASE, json_dumps_params={'ensure_ascii': False, 'indent': 4})
-        else:
-            return HttpResponseNotFound("<h1>Данного продукта нет в базе данных</h1>")
+        return HttpResponseNotFound("<h1>Данного продукта нет в базе данных.</h1>")
+
+
 
 
 def products_page_view(request: HttpRequest, page):
