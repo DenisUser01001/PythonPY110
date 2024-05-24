@@ -62,43 +62,29 @@ def add_to_cart(id_product: str) -> bool:
     :return: Возвращает True в случае успешного добавления, а False в случае неуспешного добавления(товара по id_product
     не существует).
     """
-    cart = view_in_cart() # dict
 
-    if cart["products"] is not None:
-    products = cart.get('products')
-
-
+    cart = view_in_cart()  # dict from file
+    if id_product in DATABASE and id_product in cart['products']:
+        cart['products'][id_product] += 1
+    elif id_product in DATABASE and id_product not in cart['products']:
+        cart['products'][id_product] = 1
     else:
+        return False
 
-    for run in cart[]
-
-
-
-
-    id_product = cart["products"][""]
-    for id_product in cart.values([]):
-
-
-    cart['Products']
-    cartid_product
-    cart{'Products'} view_in_cart()  # TODO Помните, что у вас есть уже реализация просмотра корзины,
-    # поэтому, чтобы загрузить данные из корзины, не нужно заново писать код.
-
-
+    with open('cart.json', 'w', encoding='utf-8') as f:
+        json.dump(cart, f)
+    return True
 
     # ! Обратите внимание, что в переменной cart находится словарь с ключом products.
-    # ! Именно в cart["products"] лежит словарь гдк по id продуктов можно получить число продуктов в корзине.
+    # ! Именно в cart["products"] лежит словарь где по id продуктов можно получить число продуктов в корзине.
     # ! Т.е. чтобы обратиться к продукту с id_product = "1" в переменной cart нужно вызвать
     # ! cart["products"][id_product]
-    # ! Далее уже сами решайте как и в какой последовательности дальше действовать.
+    # ! Далее уже сами решайте - как и в какой последовательности дальше действовать.
 
     # TODO Проверьте, а существует ли такой товар в корзине, если нет, то перед тем как его добавить - проверьте есть ли такой id_product товара в вашей базе данных DATABASE, чтобы уберечь себя от добавления несуществующего товара.
-
     # TODO Если товар существует, то увеличиваем его количество на 1
-
     # TODO Не забываем записать обновленные данные cart в 'cart.json'. Так как именно из этого файла мы считываем данные и если мы не запишем изменения, то считать измененные данные не получится.
 
-    return True
 
 
 def remove_from_cart(id_product: str) -> bool:
