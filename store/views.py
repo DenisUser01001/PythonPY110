@@ -44,7 +44,7 @@ def products_view(request):
                 data = filtering_category(DATABASE, category_key)  # TODO Использовать filtering_category и провести фильтрацию с параметрами category
 
             # В этот раз добавляем параметр safe=False, для корректного отображения списка в JSON
-            return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False,'indent': 4})
+            return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False, 'indent': 4})
 
         else:
             data = DATABASE.get(id_product)
