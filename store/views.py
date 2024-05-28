@@ -74,7 +74,7 @@ def products_page_view(request: HttpRequest, page):
 
 def shop_view(request: HttpRequest) -> HttpResponse:
     if request.method == "GET":
-        return render(request, 'store/shop.html')
+        return render(request, 'store/shop.html', context={"products": DATABASE.values()})
         # with open('store/shop.html', encoding="utf-8") as f:
         #     data = f.read()
         #     return HttpResponse(data)
