@@ -72,9 +72,21 @@ def products_page_view(request: HttpRequest, page):
         return HttpResponse(status=404)
 
 
-def shop_view(request: HttpRequest) -> HttpResponse:
+def shop_view(request: HttpRequest):
     if request.method == "GET":
-        return render(request, 'store/shop.html', context={"products": DATABASE.values()})
+        category_key = request.GET.get("category")  # Обработка фильтрации из параметров запроса
+        ordering_key = request.GET.get("ordering")
+        reverse_key = request.GET.get("reverse")
+        if ordering_key:
+            if reverse_key and reverse_key.lower() == 'true':
+                data = filtering_category(DATABASE, category_key, ordering_key, True)
+            else:
+                data = filtering_category(DATABASE, category_key, ordering_key)
+        else:
+            data = filtering_category(DATABASE, category_key)
+
+        return render(request, 'store/shop.html', context={"products": data})
+        # return render(request, 'store/shop.html', context={"products": DATABASE.values()})
         # with open('store/shop.html', encoding="utf-8") as f:
         #     data = f.read()
         #     return HttpResponse(data)
