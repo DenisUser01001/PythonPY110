@@ -85,7 +85,7 @@ def shop_view(request: HttpRequest):
         else:
             data = filtering_category(DATABASE, category_key)
 
-        return render(request, 'store/shop.html', context={"products": data})
+        return render(request, 'store/shop.html', context={"products": data, "category": category_key})  #в представлени shop_view в словарь передадим какую категорию выбрали для фильтрации
         # return render(request, 'store/shop.html', context={"products": DATABASE.values()})
         # with open('store/shop.html', encoding="utf-8") as f:
         #     data = f.read()
