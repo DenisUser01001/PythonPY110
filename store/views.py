@@ -61,14 +61,18 @@ def products_page_view(request: HttpRequest, page):
         if isinstance(page, str):
             for data in DATABASE.values():
                 if data['html'] == page:
-
-                    return render(request, "store/product.html", context={"product": data})
+                    same_category = filtering_category(DATABASE, category_key=data['category'])
+                    same_category.remove(data)
+                    same_category = same_category[:5]
+                    return render(request, "store/product.html", context={"product": data, "same_category": same_category})
 
         elif isinstance(page, int):
             # Обрабатываем условие того, что пытаемся получить страницу товара по его id
             data = DATABASE.get(str(page))  # Получаем какой странице соответствует данный id
             if data:
                 same_category = filtering_category(DATABASE, category_key=data['category'])
+                same_category.remove(data)
+                same_category = same_category[:5]
                 return render(request, "store/product.html", context={"product": data, "same_category": same_category})
         return HttpResponse(status=404)
 
