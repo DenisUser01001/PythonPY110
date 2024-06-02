@@ -1,32 +1,9 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse, HttpRequest, HttpResponseNotFound
-import requests
+from django.contrib.auth import get_user
 
 from store.models import DATABASE
 from logic.services import filtering_category, add_to_cart, remove_from_cart, view_in_cart
-
-# Create your views here.
-
-"""Моя первая версия отображения продуктов в JSON и отдельного JSON продукта по id:"""
-# def products_view(request: HttpRequest):
-#     if request.method == "GET":
-#         prod_id = request.GET.get('id')
-#
-#         products_id_in_database = []
-#         for temp1, temp2 in DATABASE.items():
-#             products_id_in_database.append(temp2['id'])
-#
-#         if prod_id in products_id_in_database:
-#             for key, nested_dict in DATABASE.items():
-#                 if nested_dict['id'] == int(prod_id):
-#
-#                     return JsonResponse(nested_dict, json_dumps_params={'ensure_ascii': False, 'indent': 4})
-#         elif prod_id is None:
-#             return JsonResponse(DATABASE, json_dumps_params={'ensure_ascii': False, 'indent': 4})
-#         else:
-#             return HttpResponseNotFound("<h1>Данного продукта нет в базе данных!</h1>")
-
-"""Версия, переписанная на основании практических пособий:"""
 
 
 def products_view(request):
@@ -34,18 +11,17 @@ def products_view(request):
         # Обработка id из параметров запроса (уже было реализовано ранее)
         id_product = request.GET.get('id')
         if id_product is None:
-            category_key = request.GET.get('category')  # Считали 'category'
-            ordering_key = request.GET.get('ordering')  # Считали в каком порядке будем сортировать
+            category_key = request.GET.get('category')
+            ordering_key = request.GET.get('ordering')
 
-            if ordering_key:  # Если в параметрах есть 'ordering'
-                if request.GET.get('reverse') and request.GET.get('reverse').lower() == 'true':  # Если в параметрах есть 'ordering' и 'reverse'=True
-                    data = filtering_category(DATABASE, category_key, ordering_key, True)  # TODO Использовать filtering_category и провести фильтрацию с параметрами category, ordering, reverse=True
-                else:  # Если не обнаружили в адресно строке ...&reverse=true , значит reverse=False
-                    data = filtering_category(DATABASE, category_key, ordering_key)  # TODO Использовать filtering_category и провести фильтрацию с параметрами category, ordering, reverse=False
+            if ordering_key:
+                if request.GET.get('reverse') and request.GET.get('reverse').lower() == 'true':
+                    data = filtering_category(DATABASE, category_key, ordering_key, True)
+                else:
+                    data = filtering_category(DATABASE, category_key, ordering_key)
             else:
-                data = filtering_category(DATABASE, category_key)  # TODO Использовать filtering_category и провести фильтрацию с параметрами category
+                data = filtering_category(DATABASE, category_key)
 
-            # В этот раз добавляем параметр safe=False, для корректного отображения списка в JSON
             return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False, 'indent': 4})
 
         else:
@@ -93,13 +69,16 @@ def shop_view(request: HttpRequest):
         return render(request, 'store/shop.html', context={"products": data, "category": category_key})  #в представлени shop_view в словарь передадим какую категорию выбрали для фильтрации
 
 
-
 def cart_view(request: HttpRequest):
     if request.method == "GET":
-        data = view_in_cart()  # TODO Вызвать ответственную за это действие функцию
+
+        current_user = get_user(request).username
+        data = view_in_cart(request)[current_user]
+
         json_param = request.GET.get("format")
         if json_param and json_param.lower() == "json":
             return JsonResponse(data, json_dumps_params={'ensure_ascii': False, 'indent': 4})
+
         products = []
         for product_id, quantity in data['products'].items():
             product = DATABASE[product_id]
@@ -109,9 +88,9 @@ def cart_view(request: HttpRequest):
         return render(request, "store/cart.html", context={"products": products})
 
 
-def cart_add_view(request: HttpRequest, id_product: int):
+def cart_add_view(request: HttpRequest, id_product):
     if request.method == "GET":
-        result = add_to_cart(id_product)  # TODO Вызвать ответственную за это действие функцию и передать необходимые параметры
+        result = add_to_cart(request, id_product)
         if result:
             return JsonResponse({"answer": "Продукт успешно добавлен в корзину"},
                                 json_dumps_params={'ensure_ascii': False})
@@ -121,9 +100,9 @@ def cart_add_view(request: HttpRequest, id_product: int):
                             json_dumps_params={'ensure_ascii': False})
 
 
-def cart_del_view(request: HttpRequest, id_product: int):
+def cart_del_view(request: HttpRequest, id_product):
     if request.method == "GET":
-        result = remove_from_cart(id_product)  # TODO Вызвать ответственную за это действие функцию и передать необходимые параметры
+        result = remove_from_cart(request, id_product)
         if result:
             return JsonResponse({"answer": "Продукт успешно удалён из корзины"},
                                 json_dumps_params={'ensure_ascii': False})
@@ -133,8 +112,26 @@ def cart_del_view(request: HttpRequest, id_product: int):
                             json_dumps_params={'ensure_ascii': False})
 
 
+def cart_buy_now_view(request, id_product):
+    if request.method == "GET":
+        result = add_to_cart(request, id_product)
+        if result:
+            return redirect("store:cart_view")
+        return HttpResponseNotFound("Неудачное добавление в корзину")
+
+
+def cart_remove_view(request, id_product):
+    if request.method == "GET":
+        result = remove_from_cart(request, id_product)
+        if result:
+            return redirect("store:cart_view")
+
+        return HttpResponseNotFound("Неудачное удаление из корзины")
+
+
 def coupon_check_view(request, name_coupon):
-    # DATA_COUPON - база данных купонов: ключ - код купона (name_coupon); значение - словарь со значением скидки в процентах и
+    # DATA_COUPON - база данных купонов: ключ - код купона (name_coupon);
+    # значение - словарь со значением скидки в процентах и
     # значением действителен ли купон или нет
     DATA_COUPON = {
         "coupon": {
@@ -149,13 +146,15 @@ def coupon_check_view(request, name_coupon):
             return JsonResponse({'discount': DATA_COUPON[name_coupon]['value'], 'is_valid': DATA_COUPON[name_coupon]['is_valid']})
         return HttpResponse('Неверный купон.')
         # Проверьте, что купон есть в DATA_COUPON, если он есть, то верните JsonResponse в котором по ключу "discount"
-        # получают значение скидки в процентах, а по ключу "is_valid" понимают действителен ли купон или нет (True, False)
+        # получают значение скидки в процентах, а по ключу "is_valid" понимают действителен ли купон,
+        # или нет (True, False)
         # Если купона нет в базе, то верните HttpResponseNotFound("Неверный купон")
 
 
 def delivery_estimate_view(request):
-    # База данных по стоимости доставки. Ключ - Страна; Значение словарь с городами и ценами; Значение с ключом fix_price
-    # применяется если нет города в данной стране
+    # База данных по стоимости доставки.
+    # Ключ - Страна; Значение словарь с городами и ценами; Значение с ключом fix_price
+    # применяется если нет города в данной стране.
     DATA_PRICE = {
         "Россия": {
             "Москва": {"price": 80},
@@ -173,23 +172,8 @@ def delivery_estimate_view(request):
             return JsonResponse({'price': DATA_PRICE[country]['fix_price']})
         return HttpResponseNotFound("Неверные данные")
         # Реализуйте логику расчёта стоимости доставки, которая выполняет следующее:
-        # Если в базе DATA_PRICE есть и страна (country) и существует город(city), то вернуть JsonResponse со словарём, {"price": значение стоимости доставки}
-        # Если в базе DATA_PRICE есть страна, но нет города, то вернуть JsonResponse со словарём, {"price": значение фиксированной стоимости доставки}
+        # Если в базе DATA_PRICE есть и страна (country) и существует город(city),
+        # то вернуть JsonResponse со словарём, {"price": значение стоимости доставки}
+        # Если в базе DATA_PRICE есть страна, но нет города,
+        # то вернуть JsonResponse со словарём, {"price": значение фиксированной стоимости доставки}
         # Если нет страны, то вернуть HttpResponseNotFound("Неверные данные")
-
-
-def cart_buy_now_view(request, id_product):
-    if request.method == "GET":
-        result = add_to_cart(id_product)
-        if result:
-            return redirect("store:cart_view")
-        return HttpResponseNotFound("Неудачное добавление в корзину")
-
-
-def cart_remove_view(request, id_product):
-    if request.method == "GET":
-        result = remove_from_cart(id_product)
-        if result:
-            return redirect("store:cart_view")
-
-        return HttpResponseNotFound("Неудачное удаление из корзины")
