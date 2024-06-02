@@ -36,5 +36,5 @@ urlpatterns = [
     path('random/', random_view),
     path('datetime/', datetime_view),
     path('', include('app_weather.urls')),
-    path('login/', include('app_login.urls')),
+    path('', include('app_login.urls')),
 ]
