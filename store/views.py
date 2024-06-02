@@ -91,10 +91,7 @@ def shop_view(request: HttpRequest):
             data = filtering_category(DATABASE, category_key)
 
         return render(request, 'store/shop.html', context={"products": data, "category": category_key})  #в представлени shop_view в словарь передадим какую категорию выбрали для фильтрации
-        # return render(request, 'store/shop.html', context={"products": DATABASE.values()})
-        # with open('store/shop.html', encoding="utf-8") as f:
-        #     data = f.read()
-        #     return HttpResponse(data)
+
 
 
 def cart_view(request: HttpRequest):
@@ -186,5 +183,13 @@ def cart_buy_now_view(request, id_product):
         result = add_to_cart(id_product)
         if result:
             return redirect("store:cart_view")
-
         return HttpResponseNotFound("Неудачное добавление в корзину")
+
+
+def cart_remove_view(request, id_product):
+    if request.method == "GET":
+        result = remove_from_cart(id_product)
+        if result:
+            return redirect("store:cart_view")
+
+        return HttpResponseNotFound("Неудачное удаление из корзины")
