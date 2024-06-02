@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse, HttpRequest, HttpResponseNotFound
 from django.contrib.auth import get_user
+from django.contrib.auth.decorators import login_required
 
 from store.models import DATABASE
 from logic.services import filtering_category, add_to_cart, remove_from_cart, view_in_cart
@@ -69,6 +70,7 @@ def shop_view(request: HttpRequest):
         return render(request, 'store/shop.html', context={"products": data, "category": category_key})  #в представлени shop_view в словарь передадим какую категорию выбрали для фильтрации
 
 
+@login_required(login_url='login:login_view')
 def cart_view(request: HttpRequest):
     if request.method == "GET":
 
@@ -88,6 +90,7 @@ def cart_view(request: HttpRequest):
         return render(request, "store/cart.html", context={"products": products})
 
 
+@login_required(login_url='login:login_view')
 def cart_add_view(request: HttpRequest, id_product):
     if request.method == "GET":
         result = add_to_cart(request, id_product)
@@ -112,6 +115,7 @@ def cart_del_view(request: HttpRequest, id_product):
                             json_dumps_params={'ensure_ascii': False})
 
 
+@login_required(login_url='login:login_view')
 def cart_buy_now_view(request, id_product):
     if request.method == "GET":
         result = add_to_cart(request, id_product)
