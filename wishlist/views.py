@@ -1,5 +1,5 @@
 from django.contrib.auth import login, authenticate, logout
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, JsonResponse, HttpResponseNotFound
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user
 
@@ -65,3 +65,12 @@ def wishlist_json(request):
         return JsonResponse({"answer": "Пользователь не авторизирован"},
                             status=404,
                             json_dumps_params={'ensure_ascii': False})  # JsonResponse с ключом "answer" и значением "Пользователь не авторизирован" и параметром status=404
+
+
+def wishlist_remove_view(request, id_product):
+    if request.method == "GET":
+        result = remove_from_wishlist(request, id_product)
+        if result:
+            return redirect("wishlist:wishlist_view")
+
+        return HttpResponseNotFound("Неудачное удаление из избранного")
