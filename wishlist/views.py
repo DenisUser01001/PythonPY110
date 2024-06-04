@@ -2,11 +2,13 @@ from django.contrib.auth import login, authenticate, logout
 from django.http import HttpRequest, JsonResponse, HttpResponseNotFound
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user
+from django.contrib.auth.decorators import login_required
 
 from logic.services import view_in_wishlist, add_to_wishlist, remove_from_wishlist
 from store.models import DATABASE
 
 
+@login_required(login_url='login:login_view')
 def wishlist_view(request: HttpRequest):
     if request.method == "GET":
         if request.method == "GET":
@@ -22,6 +24,7 @@ def wishlist_view(request: HttpRequest):
             return render(request, "wishlist/wishlist.html", context={"products": products})
 
 
+@login_required(login_url='login:login_view')
 def wishlist_add_json(request, id_product: str):
     """
     Добавление продукта в избранное и возвращение информации об успехе или неудаче в JSON
@@ -51,6 +54,7 @@ def wishlist_del_json(request, id_product: str):
                             json_dumps_params={'ensure_ascii': False})  # JsonResponse с ключом "answer" и значением "Неудачное удаление из избранного" и параметром status=404
 
 
+@login_required(login_url='login:login_view')
 def wishlist_json(request):
     """
     Просмотр всех продуктов в избранном для пользователя и возвращение этого в JSON
