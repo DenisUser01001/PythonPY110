@@ -198,7 +198,7 @@ def add_user_to_wishlist(request, username: str) -> None:
     :return: None
     """
     wishlist_users = view_in_wishlist(request)
-    wishlist = wishlist_users[get_user(request).username]
+    wishlist = wishlist_users.get(username)
 
     if not wishlist:  # Если пользователя до настоящего момента не было в Избранном, то создаём его и записываем в базу
         with open('wishlist.json', mode='w', encoding='utf-8') as f:
